@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel, constr
 from slowapi import Limiter
-from slowapi.util import get_remote_address
+from slowapi.util import get_remote_address;
+
 from dotenv import load_dotenv
 from app.openai_handler import generate_openai_response
 import os
