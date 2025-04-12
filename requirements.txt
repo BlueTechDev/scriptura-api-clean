@@ -3,4 +3,3 @@ uvicorn[standard]
 openai
 python-dotenv
 slowapi
-itsdangerous
