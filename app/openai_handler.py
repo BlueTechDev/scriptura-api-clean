@@ -1,9 +1,14 @@
-import openai
+from openai import OpenAI
 import os
 from dotenv import load_dotenv
+import traceback
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+print(f"🔑 Loaded key prefix: {OPENAI_API_KEY[:10]}")  # DEBUG LINE
+
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 SYSTEM_PROMPT = (
     "You are a biblical assistant specializing in Christian theology, providing structured, well-formatted responses."
@@ -26,10 +31,15 @@ def generate_openai_response(query: str, context: str = "") -> str:
         messages.append({"role": "user", "content": f"**Context:**\n{context}"})
     messages.append({"role": "user", "content": query})
 
-    client = openai.OpenAI(api_key=openai.api_key)
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=messages,
-        max_tokens=800
-    )
-    return response.choices[0].message.content.strip().replace("\n", "\n\n")
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=messages,
+            max_tokens=800
+        )
+        return response.choices[0].message.content.strip().replace("\n", "\n\n")
+
+    except Exception as e:
+        print("🔥 OpenAI exception occurred:")
+        traceback.print_exc()
+        raise
