@@ -24,11 +24,12 @@ app = FastAPI()
 # Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # loosen until frontend is finalized
+    allow_origins=["*"],  # or ["http://localhost:5173"] during dev
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
 
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["10/minute"])
