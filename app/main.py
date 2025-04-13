@@ -24,11 +24,15 @@ app = FastAPI()
 # Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://scriptura-ui.vercel.app/",  # <-- whitelist frontend
+        "http://localhost:5173",  # <-- localhost for dev
+    ],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
+
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["10/minute"])
 app.state.limiter = limiter
