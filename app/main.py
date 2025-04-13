@@ -25,13 +25,13 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://scriptura-ui.vercel.app/",  # <-- whitelist frontend
-        "http://localhost:5173",  # <-- localhost for dev
+        "https://scriptura-ui.vercel.app/",
+        "http://localhost:5173"
     ],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
-)
+    allow_headers=["*"],
+    )
 
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["10/minute"])
@@ -39,7 +39,7 @@ app.state.limiter = limiter
 
 # Schema
 class QueryRequest(BaseModel):
-    query: constr(min_length=1, max_length=500)
+    query: constr(min_length=1, max_length=500) # type: ignore
 
 # Chat endpoint (no session)
 @app.post("/search/")
