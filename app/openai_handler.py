@@ -5,6 +5,7 @@ import traceback
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+ASSISTANT_ID = os.getenv("OPENAI_ASSISTANT_ID")
 
 print(f"🔑 Loaded key prefix: {OPENAI_API_KEY[:10]}")  # DEBUG LINE
 
@@ -26,20 +27,38 @@ SYSTEM_PROMPT = (
 )
 
 def generate_openai_response(query: str, context: str = "") -> str:
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    if context:
-        messages.append({"role": "user", "content": f"**Context:**\n{context}"})
-    messages.append({"role": "user", "content": query})
-
     try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=messages,
-            max_tokens=800
+        # Step 1: Create a thread
+        thread = client.beta.threads.create()
+
+        # Step 2: Add user message
+        client.beta.threads.messages.create(
+            thread_id=thread.id,
+            role="user",
+            content=query
         )
-        return response.choices[0].message.content.strip().replace("\n", "\n\n")
+
+        # Step 3: Run the assistant
+        run = client.beta.threads.runs.create(
+            thread_id=thread.id,
+            assistant_id=ASSISTANT_ID
+        )
+
+        # Step 4: Poll for status
+        while True:
+            run_status = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+            if run_status.status == "completed":
+                break
+            elif run_status.status == "failed":
+                raise RuntimeError("OpenAI Assistant run failed.")
+            time.sleep(1)
+
+        # Step 5: Get messages
+        messages = client.beta.threads.messages.list(thread_id=thread.id)
+        last_message = messages.data[0]
+
+        return last_message.content[0].text.value.strip()
 
     except Exception as e:
-        print("🔥 OpenAI exception occurred:")
-        traceback.print_exc()
+        print(f"🔥 OpenAI Assistants API Error: {e}")
         raise
