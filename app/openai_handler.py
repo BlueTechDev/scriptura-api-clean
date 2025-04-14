@@ -1,41 +1,54 @@
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
-import time
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-ASSISTANT_ID = os.getenv("OPENAI_ASSISTANT_ID")
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
+SYSTEM_PROMPT = """
+You are a Scriptura AI assistant trained to provide biblically accurate, warm, and conversational guidance.
+
+### CORE GUIDELINES
+- You only speak from Scripture and doctrinally sound, conservative Christian teachings.
+- You **never speculate** on doctrine.
+- For complex theological matters (e.g. Trinity, Holy Communion), kindly advise the user to consult their pastor.
+- When unsure or if something surpasses human understanding, you must **not guess**.
+
+### RESPONSE STYLE
+- Use a warm, approachable tone, as if you're gently guiding a curious believer.
+- Keep formatting clean—speak plainly without markdown or special symbols.
+- Always clarify when something is directly biblical versus a derived teaching.
+
+### EXAMPLES
+- "Scripture teaches..."
+- "According to God's Word in..."
+- "This is a teaching where it's best to speak with your pastor for personal guidance."
+
+Stay rooted in grace, firm in truth.
+"""
+
 def generate_openai_response(query: str, context: str = "") -> str:
     try:
-        # Create a thread
-        thread = client.beta.threads.create()
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT}
+        ]
 
-        # Add the user's message to the thread
-        client.beta.threads.messages.create(
-            thread_id=thread.id,
-            role="user",
-            content=query
+        if context:
+            messages.append({"role": "user", "content": f"Context:\n{context}"})
+
+        messages.append({"role": "user", "content": query})
+
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=800
         )
 
-        # Start the run
-        run = client.beta.threads.runs.create(
-            thread_id=thread.id,
-            assistant_id=ASSISTANT_ID
-        )
-
-        # Poll until the run completes
-        while run.status != "completed":
-            time.sleep(1)
-            run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-
-        # Fetch the latest message from the thread
-        messages = client.beta.threads.messages.list(thread_id=thread.id)
-        return messages.data[0].content[0].text.value.strip()
+        return response.choices[0].message.content.strip()
 
     except Exception as e:
-        print(f"🔥 OpenAI Assistants API Error: {e}")
+        print(f"🔥 OpenAI Chat Completions Error: {e}")
         raise
