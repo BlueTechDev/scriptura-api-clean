@@ -63,5 +63,9 @@ async def get_response(request: Request, query_request: QueryRequest):
 def health_check():
     return {"status": "✅ Scriptura AI backend live."}
 
+@app.get("/")
+def root():
+    return {"message": "Welcome to Scriptura AI backend!"}
+
 if __name__ != "__main__":
     app = app
