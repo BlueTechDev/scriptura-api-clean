@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, constr
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -25,7 +26,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://scriptura-ui.vercel.app/", #  Frontend URL
+        "https://scriptura-ui.vercel.app", #  Frontend URL
         "http://localhost:5173" #localhost dev URL
     ],
     allow_credentials=True,
@@ -66,6 +67,10 @@ def health_check():
 @app.get("/")
 def root():
     return {"message": "Welcome to Scriptura AI backend!"}
+
+@app.options("/search/")
+async def preflight_handler():
+    return JSONResponse(content={"status=":"OK"}, status_code=200)
 
 if __name__ != "__main__":
     app = app
