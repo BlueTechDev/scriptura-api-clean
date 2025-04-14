@@ -25,12 +25,12 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://scriptura-ui.vercel.app/",
-        "http://localhost:5173"
+        "https://scriptura-ui.vercel.app/", #  Frontend URL
+        "http://localhost:5173" #localhost dev URL
     ],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
     )
 
 
