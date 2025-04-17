@@ -21,20 +21,22 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # FastAPI app
-# FastAPI app
 app = FastAPI()
-app.include_router(qa_router)
-# Middleware
+
+# 🧠 Add CORS middleware BEFORE router
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://scriptura-ui.vercel.app", #  Frontend URL
-        "http://localhost:5173" #localhost dev URL
+        "https://scriptura-ui.vercel.app",
+        "http://localhost:5173"
     ],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
-    )
+    allow_headers=["*"],
+)
+
+# ✅ Then include router
+app.include_router(qa_router)
 
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["10/minute"])
@@ -73,6 +75,3 @@ def root():
 @app.options("/search/")
 async def preflight_handler():
     return JSONResponse(content={"status=":"OK"}, status_code=200)
-
-if __name__ != "__main__":
-    app = app
