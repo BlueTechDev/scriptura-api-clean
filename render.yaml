@@ -1,1 +1,13 @@
-
+services:
+  - type: web
+    name: scriptura-api
+    env: python
+    buildCommand: |
+      pip install --upgrade pip setuptools wheel
+      pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: VITE_APP_ACCESS_PASSWORD
+        sync: false
