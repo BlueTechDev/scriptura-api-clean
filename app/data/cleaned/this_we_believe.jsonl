@@ -1,0 +1,76 @@
+import json
+from pathlib import Path
+
+# Directory to save the final JSONL file
+output_path = Path("/mnt/data/structured_wels_content.jsonl")
+
+# Full list of structured doctrinal entries (manually summarized from user content)
+entries = [
+    {
+        "title": "This We Believe",
+        "url": "https://wels.net/about-wels/what-we-believe/this-we-believe/",
+        "content": "This We Believe is a summary of the main teachings of the Wisconsin Evangelical Lutheran Synod. It confesses belief in the triune God, God's revelation through Scripture and nature, the Christ-centered focus of the Bible, the inspiration and inerrancy of Scripture, and the authority and sufficiency of the Bible as God's Word. It affirms the ecumenical creeds and Lutheran Confessions, and rejects relativism, higher criticism, and attempts to limit the authority of Scripture."
+    },
+    {
+        "title": "God’s Revelation",
+        "url": "https://wels.net/about-wels/what-we-believe/this-we-believe/gods-revelation/",
+        "content": "God reveals himself through nature, conscience, and most fully through Jesus Christ and the Holy Scriptures. The Bible is verbally inspired, Christ-centered, and without error. It is sufficient and authoritative for salvation and Christian living."
+    },
+    {
+        "title": "Creation, Man, and Sin",
+        "url": "https://wels.net/about-wels/what-we-believe/this-we-believe/creation/",
+        "content": "God created the world in six days. Humans were created in God's image but lost it through sin. All people are born sinful and separated from God. God still graciously provides and protects. Evolution and views denying biblical creation are rejected."
+    },
+    {
+        "title": "Christ and Redemption",
+        "url": "https://wels.net/about-wels/what-we-believe/this-we-believe/christ-and-redemption/",
+        "content": "Jesus is true God and man, born of the virgin Mary, who lived a perfect life, died for sin, rose again, and now reigns. He redeemed all people. Justification is based solely on Christ's work, not human effort."
+    },
+    {
+        "title": "Justification",
+        "url": "https://wels.net/about-wels/what-we-believe/this-we-believe/justification/",
+        "content": "God declares all sinners righteous for Christ's sake. This gift is received through faith, which is worked by the Holy Spirit. Salvation is by grace alone, not works. Believers are preserved, but can fall from faith."
+    },
+    {
+        "title": "Good Works and Prayer",
+        "url": "https://wels.net/about-wels/what-we-believe/this-we-believe/good-works/",
+        "content": "Faith leads to good works, which are done out of love for God. Works are measured by God's Word, not human opinion. Christians are called to pray. Unbelievers' works and prayers do not please God."
+    },
+    {
+        "title": "Means of Grace",
+        "url": "https://wels.net/about-wels/what-we-believe/this-we-believe/means-of-grace/",
+        "content": "God gives forgiveness, life, and salvation through the gospel in Word and sacraments (Baptism and Lord’s Supper). These are the only means the Spirit uses to work and sustain faith."
+    },
+    {
+        "title": "Church and Ministry",
+        "url": "https://wels.net/about-wels/what-we-believe/this-we-believe/church-and-ministry/",
+        "content": "The holy Christian Church is made up of believers and is invisible. Christians gather in visible churches to use the means of grace. The public ministry is established by God and carried out through calls to serve. Women are not to exercise authority over men in the church."
+    },
+    {
+        "title": "Church and State",
+        "url": "https://wels.net/about-wels/what-we-believe/this-we-believe/church-and-state/",
+        "content": "Church and state are separate institutions with distinct purposes. The church uses Word and sacraments, the state uses civil law. Christians obey the state unless it commands disobedience to God."
+    },
+    {
+        "title": "Jesus’ Return and the Judgment",
+        "url": "https://wels.net/about-wels/what-we-believe/this-we-believe/jesus-return/",
+        "content": "Jesus will return visibly to judge the world. Believers will be taken to heaven; unbelievers to hell. False teachings such as millennialism, rapture theories, and denial of bodily resurrection are rejected."
+    },
+    {
+        "title": "Creeds and Confessions",
+        "url": "https://wels.net/about-wels/what-we-believe/",
+        "content": "The Apostles’, Nicene, and Athanasian Creeds summarize biblical doctrine. Lutheran Confessions (e.g., Small and Large Catechism, Augsburg Confession, Formula of Concord) faithfully express scriptural truth."
+    },
+    {
+        "title": "Church Fellowship",
+        "url": "https://wels.net/about-wels/what-we-believe/",
+        "content": "Church fellowship includes all joint expressions of faith. Fellowship is based on full agreement in doctrine. False unity and unionism are rejected. Fellowship ends when false doctrine is tolerated or taught."
+    }
+]
+
+# Write to .jsonl file
+with output_path.open("w", encoding="utf-8") as f:
+    for entry in entries:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
+output_path.name

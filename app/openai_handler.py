@@ -1,11 +1,56 @@
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
+from fastapi.responses import JSONResponse
+import faiss
+import json
+import numpy as np
+from pathlib import Path
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from sentence_transformers import SentenceTransformer
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+MODEL_NAME = "all-MiniLM-L6-v2"
+model = SentenceTransformer(MODEL_NAME)
+index_path = Path("app/data/embedded_data/faiss_index.idx")
+data_path = Path("app/data/embedded_data/embedded_data.jsonl")
+
+if not index_path.exists():
+    raise FileNotFoundError("FAISS index not found. Run the pipeline first.")
+
+faiss_index = faiss.read_index(str(index_path))
+
+with open(data_path, "r", encoding="utf-8") as f:
+    embedded_data = [json.loads(line) for line in f]
+
+router = APIRouter()
+
+class SearchRequest(BaseModel):
+    query: str
+    top_k: int = 3
+
+@router.post("/qa")
+def ask_scriptura(query: SearchRequest):
+    query_embedding = model.encode(query.query).astype(np.float32)
+    distances, indices = faiss_index.search(np.array([query_embedding]), query.top_k)
+
+    if len(indices[0]) > 0 and indices[0][0] != -1:
+        top_contexts = [embedded_data[i]["content"] for i in indices[0] if i != -1]
+        context = "\n\n".join(top_contexts)
+
+        if len(context.split()) > 1500:
+            context = "\n\n".join(top_contexts[:2])  # Truncate to 2 entries if needed
+
+        response = generate_openai_response(query.query, context=context)
+        return {"response": response}
+
+    fallback = generate_openai_response(query.query)
+    return {"response": fallback}
 
 SYSTEM_PROMPT = """
 You are a Scriptura AI assistant trained to provide biblically accurate, warm, and conversational guidance.
@@ -18,7 +63,8 @@ You are a Scriptura AI assistant trained to provide biblically accurate, warm, a
 
 ### RESPONSE STYLE
 - Use a warm, approachable tone, as if you're gently guiding a curious believer.
-- Keep formatting clean—speak plainly without markdown or special symbols.
+- Keep formatting clean—speak plainly without markdown, special characters, or emojis.
+- Do **not** cite titles or URLs. Respond conversationally, like a helpful pastor might.
 - Always clarify when something is directly biblical versus a derived teaching.
 
 ### EXAMPLES
@@ -31,12 +77,10 @@ Stay rooted in grace, firm in truth.
 
 def generate_openai_response(query: str, context: str = "") -> str:
     try:
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT}
-        ]
+        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
         if context:
-            messages.append({"role": "user", "content": f"Context:\n{context}"})
+            messages.append({"role": "user", "content": f"Use the following doctrinal material as context when answering:\n\n{context}"})
 
         messages.append({"role": "user", "content": query})
 
