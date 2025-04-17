@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.openai_handler import router as faiss_router
+from app.openai_handler import router as qa_router
 from pydantic import BaseModel, constr
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 # FastAPI app
 # FastAPI app
 app = FastAPI()
-app.include_router(faiss_router)
+app.include_router(qa_router)
 # Middleware
 app.add_middleware(
     CORSMiddleware,
