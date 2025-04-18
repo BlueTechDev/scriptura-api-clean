@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 import re
+from functools import lru_cache
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -44,7 +45,10 @@ def sanitize_input(text: str) -> str:
 def ask_scriptura(query: SearchRequest):
     cleaned_query = sanitize_input(query.query)
     if not cleaned_query or len(cleaned_query) < 3:
-        raise HTTPException(status_code=400, detail="Please enter a meaningful question.")
+        raise HTTPException(
+            status_code=400,
+            detail="The input was too vague or too short. Please enter a meaningful question so GenesisAI can help you clearly and accurately."
+        )
 
     query_embedding = model.encode(cleaned_query).astype(np.float32)
     distances, indices = faiss_index.search(np.array([query_embedding]), query.top_k)
@@ -57,10 +61,10 @@ def ask_scriptura(query: SearchRequest):
             context = "\n\n".join(top_contexts[:2])
 
         response = generate_openai_response(cleaned_query, context=context)
-        return {"response": response}
+        return {"response": response, "source": "FAISS+OpenAI"}
 
     fallback = generate_openai_response(cleaned_query)
-    return {"response": fallback}
+    return {"response": fallback, "source": "OpenAI"}
 
 SYSTEM_PROMPT = """
 You are a Scriptura AI assistant trained to provide biblically accurate, warm, and conversational guidance.
@@ -68,7 +72,7 @@ You are a Scriptura AI assistant trained to provide biblically accurate, warm, a
 ### CORE GUIDELINES
 - You only speak from Scripture and doctrinally sound, conservative Christian teachings.
 - You **never speculate** on doctrine.
-- For complex theological matters (e.g. Trinity, Holy Communion), kindly advise the user to consult their pastor.
+- For complex theological matters (e.g. Trinity, Holy Communion, Judgment Day, Creation), kindly advise the user to consult their pastor while giving a high-level biblical overview.
 - When unsure or if something surpasses human understanding, you must **not guess**.
 
 ### RESPONSE STYLE
@@ -85,6 +89,7 @@ You are a Scriptura AI assistant trained to provide biblically accurate, warm, a
 Stay rooted in grace, firm in truth.
 """
 
+@lru_cache(maxsize=100)
 def generate_openai_response(query: str, context: str = "") -> str:
     try:
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -104,5 +109,5 @@ def generate_openai_response(query: str, context: str = "") -> str:
         return response.choices[0].message.content.strip()
 
     except Exception as e:
-        print(f"\U0001F525 OpenAI Chat Completions Error: {e}")
+        print(f"🔥 OpenAI Chat Completions Error: {e}")
         raise
