@@ -9,6 +9,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
+import re
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -34,9 +35,18 @@ class SearchRequest(BaseModel):
     query: str
     top_k: int = 3
 
+def sanitize_input(text: str) -> str:
+    text = re.sub(r"\s+", " ", text.strip())
+    text = re.sub(r"[?!.]{2,}", ".", text)
+    return text
+
 @router.post("/qa")
 def ask_scriptura(query: SearchRequest):
-    query_embedding = model.encode(query.query).astype(np.float32)
+    cleaned_query = sanitize_input(query.query)
+    if not cleaned_query or len(cleaned_query) < 3:
+        raise HTTPException(status_code=400, detail="Please enter a meaningful question.")
+
+    query_embedding = model.encode(cleaned_query).astype(np.float32)
     distances, indices = faiss_index.search(np.array([query_embedding]), query.top_k)
 
     if len(indices[0]) > 0 and indices[0][0] != -1:
@@ -44,12 +54,12 @@ def ask_scriptura(query: SearchRequest):
         context = "\n\n".join(top_contexts)
 
         if len(context.split()) > 1500:
-            context = "\n\n".join(top_contexts[:2])  # Truncate to 2 entries if needed
+            context = "\n\n".join(top_contexts[:2])
 
-        response = generate_openai_response(query.query, context=context)
+        response = generate_openai_response(cleaned_query, context=context)
         return {"response": response}
 
-    fallback = generate_openai_response(query.query)
+    fallback = generate_openai_response(cleaned_query)
     return {"response": fallback}
 
 SYSTEM_PROMPT = """
@@ -94,5 +104,5 @@ def generate_openai_response(query: str, context: str = "") -> str:
         return response.choices[0].message.content.strip()
 
     except Exception as e:
-        print(f"🔥 OpenAI Chat Completions Error: {e}")
+        print(f"\U0001F525 OpenAI Chat Completions Error: {e}")
         raise
